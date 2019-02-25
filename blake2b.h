@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include <memory.h>
+#include <stdlib.h>
 
 // message the bytes to hash.
 // messageLength the number of bytes to hash.

@@ -179,8 +179,6 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
     memcpy(state->blocks, message, readBytes);
     state->blockOfset += readBytes;
     
-    int loop = 0;
-
     while(bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES)
     {
         Blake2B_Compress(state, false);
@@ -195,7 +193,6 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
         memcpy(state->blocks, message+state->blockOfset, readBytes);
 
         state->blockOfset += readBytes;
-        loop++;
     }
     Blake2B_Compress(state, true);
 }
@@ -244,7 +241,7 @@ bool Blake2B(const uint8_t *message, const uint64_t messageLength, const uint8_t
 
     if(!Blake2B_Init(&cs, (uint8_t)outLength, key, (uint8_t)keyLength, salt, (uint8_t)saltLength, personalization, (uint8_t)personalizationLength)) return false;
 
-    uint8_t messageBuffer[cs.totalBlocks];
+    uint8_t *messageBuffer = (uint8_t*)malloc(cs.totalBlocks *sizeof(uint8_t));
     memset(messageBuffer, 0, cs.totalBlocks);
     int ofset = 0;
 
@@ -258,6 +255,6 @@ bool Blake2B(const uint8_t *message, const uint64_t messageLength, const uint8_t
 
     Blake2B_Hash(&cs, messageBuffer, cs.totalBlocks);
     Blake2B_Finalize(&cs, outbuffer, outLength);
-
+    free(messageBuffer);
     return true;
 }

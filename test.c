@@ -15,7 +15,6 @@
 
 #include "blake2b.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 int main(int argv, char **argc)
 {
@@ -30,7 +29,7 @@ int main(int argv, char **argc)
     int targetLength = atoi(argc[1]);
 
     char *msg = argc[2];
-    int msglen = atoi(argc[3]);
+    int msglen = abs(atoi(argc[3]));
 
     char *key = NULL;
     int keylen = 0;
@@ -38,7 +37,7 @@ int main(int argv, char **argc)
     if(argv >= 6)
     {
         key = argc[4];
-        keylen = atoi(argc[5]);
+        keylen = abs(atoi(argc[5]));
     }
 
     printf("Is big endian: %s\n", Is_Big_Endian() ? "true" : "false");
