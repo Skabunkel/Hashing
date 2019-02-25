@@ -12,8 +12,8 @@
 *   I have not tested it on a big endian machine so i hope it will work. don't know though. Now that i think about it probably not.
 */  
 
-#if !defined(_HASH_H)
-#define _HASH_H
+#if !defined(_BLAKE2B_H)
+#define _BLAKE2B_H
 
 #define BLAKE2B_CONSTANT_OUTANDKEYLENGTH 64
 #define BLAKE2B_CONSTANT_PERSONALIZATION 16
@@ -43,4 +43,4 @@
 bool Blake2B(const uint8_t *message, const uint64_t messageLength, const uint8_t *key, const uint32_t keyLength, const uint8_t *salt, const uint32_t saltLength, const uint8_t *personalization, const uint32_t personalizationLength,  uint8_t *outbuffer, const uint32_t outLength);
 //const char *HexStr(uint8_t *byteBuffer, const uint32_t length);
 bool Is_Big_Endian();
-#endif // _HASH_H
+#endif // _BLAKE2B_H
