@@ -29,10 +29,10 @@ for it in range(itterations):
 
     blakeHash = blake2b(str.encode(inputstr), digest_size=outputLength, key=str.encode(keystr)).hexdigest();
 
-    if(inputLength == ""):
-        inputLength  += '0';
+    if(inputLength == 0):
+        inputstr  += '0';
 
-    if(keystr == ""):
+    if(keyLength == 0):
         keystr  += '0';
 
     start = time.time();
@@ -49,6 +49,6 @@ for it in range(itterations):
         print('{}/{} itterations successfull. longest input: {} current input: {} current seconds: {} average seconds: {} std seconds: {} mean seconds: {}'.format(it, itterations, longestKeySeen, len(inputstr), dif, numpy.average(perfs), numpy.std(perfs), numpy.mean(perfs) ));
 
     if(blakeHash != result):
-        print('Expected:\t{}\nActual\t{}\nCurrent input: {} {} {} {} {}'.format(blakeHash, result, str(outputLength), str(inputstr), str(len(inputstr)), str(keystr), str(len(keystr))));
+        print('Expected:\t{}\nActual\t{}\nCurrent input: {} {} {} {} {}'.format(blakeHash, result, str(outputLength), str(inputstr), str(inputLength), str(keystr), str(keyLength)));
         exit(1);
 print('{}/{} itterations successfull. average seconds: {} std seconds: {} mean seconds: {}'.format(itterations, itterations, numpy.average(perfs), numpy.std(perfs), numpy.mean(perfs)));
