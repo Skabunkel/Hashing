@@ -70,6 +70,7 @@ typedef struct Blake2BState
     uint8_t keyLength;
     uint64_t readblock;
     uint64_t totalBlocks;
+    bool isBigEndian;
     uint8_t blocks[BLAKE2B_CONSTANT_BLOCKBYTES];
 } Blake2BState;
 
@@ -78,7 +79,7 @@ uint64_t Shift64(const uint64_t value, int bits)
     return ((value >> bits) | (value << (64 - bits)));
 }
 
-void Mix(uint64_t *va, uint64_t *vb, uint64_t *vc, uint64_t *vd, uint64_t x, uint64_t y)
+void Mix(uint64_t *va, uint64_t *vb, uint64_t *vc, uint64_t *vd, const uint64_t x, const uint64_t y)
 {
     *va = *va + *vb + x;
     *vd = Shift64(*vd ^ *va, 32);
@@ -136,6 +137,8 @@ void Blake2B_Compress(Blake2BState *state, const bool isLastBlock)
 
 bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *key, const uint8_t keyLength, const uint8_t *salt, const uint8_t saltLength, const uint8_t *personalization, const uint8_t personalizationLength)
 {
+    state->isBigEndian = Is_Big_Endian();
+
     state->stateVector[1] = Blake2BIV[1];
     state->stateVector[2] = Blake2BIV[2];
     state->stateVector[3] = Blake2BIV[3];
@@ -156,6 +159,12 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
     if (personalizationLength > 0)
     {
         memcpy(hashSt + 48, personalization, personalizationLength);
+    }
+
+    // Cant test this yet but i think this would fix it on big endian machines.
+    if(state->isBigEndian)
+    {
+        Flip_Uint64_Bytes((uint64_t*)&hashSt);
     }
 
     uint8_t *IV0 = (uint8_t*)Blake2BIV;
@@ -200,7 +209,7 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
 
         if (readBytes < BLAKE2B_CONSTANT_BLOCKBYTES)
         {
-        memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
+            memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
         }
         bytesLeft = messageLength - bytesRead;
 
@@ -214,7 +223,7 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
 void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t outLength)
 {
     Blake2B_Compress(state, true);
-    if (Is_Big_Endian())
+    if (state->isBigEndian)
     {
         Flip_Uint64_Bytes(&state->stateVector[0]);
         Flip_Uint64_Bytes(&state->stateVector[1]);
