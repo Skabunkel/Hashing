@@ -183,7 +183,7 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
     {
         memcpy(state->blocks, key, keyLength);
         state->readblock += 128;
-        Blake2B_Compress(state, false);
+        Blake2B_Compress(state, state->totalBlocks == 0);
         memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
     }
 
@@ -222,7 +222,8 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
 
 void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t outLength)
 {
-    Blake2B_Compress(state, true);
+    if(state->totalBlocks != 0)
+        Blake2B_Compress(state, true);
     if (state->isBigEndian)
     {
         Flip_Uint64_Bytes(&state->stateVector[0]);
