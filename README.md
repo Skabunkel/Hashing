@@ -1,4 +1,4 @@
-# Hashing
+# SkaHash
 My own implementations of different hashing algorithms in C99
 
 - [X] Blake2B
