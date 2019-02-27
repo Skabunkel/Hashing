@@ -1,4 +1,4 @@
-from ubuntu 
+FROM ubuntu 
 
 WORKDIR build
 RUN apt update && apt -y install build-essential clang
