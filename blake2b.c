@@ -189,9 +189,9 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
     int readBytes = 0;
     readBytes = messageLength > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : messageLength;
     memcpy(state->blocks, message, readBytes);
+
     bytesRead += readBytes;
     state->readblock += readBytes;
-    
 
     while (bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES)
     {
