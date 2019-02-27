@@ -40,7 +40,7 @@ int main(int argv, char **argc)
         keylen = abs(atoi(argc[5]));
     }
 
-    printf("Is big endian: %s\n", Is_Big_Endian() ? "true" : "false");
+    //printf("Is big endian: %s\n", Is_Big_Endian() ? "true" : "false");
 
     uint8_t buffer[targetLength];
     memset(buffer, 0, targetLength);
