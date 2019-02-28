@@ -184,7 +184,7 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
         memcpy(state->blocks, key, keyLength);
         state->readblock += 128;
         Blake2B_Compress(state, state->totalBlocks == 0);
-        memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
+        memset(state->blocks, 0, keyLength);
     }
 
     return true;
