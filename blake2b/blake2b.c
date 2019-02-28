@@ -238,10 +238,7 @@ void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t ou
 
     uint8_t *reader = (uint8_t*)&state->stateVector;
 
-    for (int i = 0; i < outLength; i++)
-    {
-        outBuffer[i] = reader[i];
-    }
+    memcpy(outBuffer, reader, outLength);
 }
 
 bool Blake2B(const uint8_t *message, const uint64_t messageLength, const uint8_t *key, const uint32_t keyLength, const uint8_t *salt, const uint32_t saltLength, const uint8_t *personalization, const uint32_t personalizationLength, uint8_t *outbuffer, const uint32_t outLength)
