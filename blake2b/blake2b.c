@@ -74,7 +74,7 @@ typedef struct Blake2BState
     uint8_t blocks[BLAKE2B_CONSTANT_BLOCKBYTES];
 } Blake2BState;
 
-uint64_t Shift64(const uint64_t value, int bits)
+uint64_t RightShift64(const uint64_t value, int bits)
 {
     return ((value >> bits) | (value << (64 - bits)));
 }
@@ -82,16 +82,16 @@ uint64_t Shift64(const uint64_t value, int bits)
 void Mix(uint64_t *va, uint64_t *vb, uint64_t *vc, uint64_t *vd, const uint64_t x, const uint64_t y)
 {
     *va = *va + *vb + x;
-    *vd = Shift64(*vd ^ *va, 32);
+    *vd = RightShift64(*vd ^ *va, 32);
 
     *vc = *vc + *vd;
-    *vb = Shift64(*vb ^ *vc, 24);
+    *vb = RightShift64(*vb ^ *vc, 24);
 
     *va = *va + *vb + y;
-    *vd = Shift64(*vd ^ *va, 16);
+    *vd = RightShift64(*vd ^ *va, 16);
 
     *vc = *vc + *vd;
-    *vb = Shift64(*vb ^ *vc, 63);
+    *vb = RightShift64(*vb ^ *vc, 63);
 }
 
 void Blake2B_Compress(Blake2BState *state, const bool isLastBlock)
