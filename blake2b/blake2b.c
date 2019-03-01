@@ -98,20 +98,44 @@ void Blake2B_Compress(Blake2BState *state, const bool isLastBlock)
 {
     uint64_t v[16];
 
-    for (int i = 0; i < 8; i++)
-    {
-        v[i] = state->stateVector[i];
-        v[i + 8] = Blake2BIV[i];
-    }
-
-    v[12] ^= state->readblock;
-
-    if (isLastBlock)
-    {
-        v[14] ^= 0xFFFFFFFFFFFFFFFF;
-    }
+    v[0] = state->stateVector[0];
+    v[1] = state->stateVector[1];
+    v[2] = state->stateVector[2];
+    v[3] = state->stateVector[3];
+    v[4] = state->stateVector[4];
+    v[5] = state->stateVector[5];
+    v[6] = state->stateVector[6];
+    v[7] = state->stateVector[7];
+    v[8] = Blake2BIV[0];
+    v[9] = Blake2BIV[1];
+    v[10] = Blake2BIV[2];
+    v[11] = Blake2BIV[3];
+    v[12] = Blake2BIV[4] ^ state->readblock;
+    v[13] = Blake2BIV[5];
+    v[14] = !isLastBlock ? Blake2BIV[6] : Blake2BIV[6] ^ 0xFFFFFFFFFFFFFFFF;
+    v[15] = Blake2BIV[7];
 
     uint64_t *messageVector = (uint64_t*)state->blocks;
+
+    if(state->isBigEndian)
+    {
+        Flip_Uint64_Bytes(&messageVector[0]);
+        Flip_Uint64_Bytes(&messageVector[1]);
+        Flip_Uint64_Bytes(&messageVector[2]);
+        Flip_Uint64_Bytes(&messageVector[3]);
+        Flip_Uint64_Bytes(&messageVector[4]);
+        Flip_Uint64_Bytes(&messageVector[5]);
+        Flip_Uint64_Bytes(&messageVector[6]);
+        Flip_Uint64_Bytes(&messageVector[7]);
+        Flip_Uint64_Bytes(&messageVector[8]);
+        Flip_Uint64_Bytes(&messageVector[9]);
+        Flip_Uint64_Bytes(&messageVector[10]);
+        Flip_Uint64_Bytes(&messageVector[11]);
+        Flip_Uint64_Bytes(&messageVector[12]);
+        Flip_Uint64_Bytes(&messageVector[13]);
+        Flip_Uint64_Bytes(&messageVector[14]);
+        Flip_Uint64_Bytes(&messageVector[15]);
+    }
 
     uint8_t st = 0;
     for (int i = 0; i < 12; i++)
@@ -129,10 +153,14 @@ void Blake2B_Compress(Blake2BState *state, const bool isLastBlock)
         Mix(&v[3], &v[4], &v[9], &v[14], messageVector[sigma[st][14]], messageVector[sigma[st][15]]);
     }
 
-    for (int i = 0; i < 8; i++)
-    {
-        state->stateVector[i] ^= v[i] ^ v[i + 8];
-    }
+    state->stateVector[0] ^= v[0] ^ v[8];
+    state->stateVector[1] ^= v[1] ^ v[9];
+    state->stateVector[2] ^= v[2] ^ v[10];
+    state->stateVector[3] ^= v[3] ^ v[11];
+    state->stateVector[4] ^= v[4] ^ v[12];
+    state->stateVector[5] ^= v[5] ^ v[13];
+    state->stateVector[6] ^= v[6] ^ v[14];
+    state->stateVector[7] ^= v[7] ^ v[15];
 }
 
 bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *key, const uint8_t keyLength, const uint8_t *salt, const uint8_t saltLength, const uint8_t *personalization, const uint8_t personalizationLength)
@@ -193,37 +221,40 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
 void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t messageLength)
 {
     uint64_t bytesLeft = messageLength;
-    uint64_t bytesRead = 0;
 
-    int readBytes = 0;
-    readBytes = messageLength > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : messageLength;
+    int readBytes = messageLength > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : messageLength;
     memcpy(state->blocks, message, readBytes);
 
-    bytesRead += readBytes;
+    uint64_t bytesRead = readBytes;
     state->readblock += readBytes;
 
     while (bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES)
     {
         Blake2B_Compress(state, false);
-        readBytes = messageLength - bytesRead > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : messageLength - bytesRead;
+        bytesLeft = messageLength - bytesRead;
+        readBytes = bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : bytesLeft;
 
         if (readBytes < BLAKE2B_CONSTANT_BLOCKBYTES)
         {
             memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
         }
-        bytesLeft = messageLength - bytesRead;
 
         memcpy(state->blocks, message + bytesRead, readBytes);
 
         bytesRead += readBytes;
         state->readblock += readBytes;
     }
+
+    
 }
 
 void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t outLength)
 {
-    if(state->totalBlocks != 0)
+    if(state->totalBlocks != 0 || state->keyLength == 0)
+    {
         Blake2B_Compress(state, true);
+    }
+
     if (state->isBigEndian)
     {
         Flip_Uint64_Bytes(&state->stateVector[0]);
