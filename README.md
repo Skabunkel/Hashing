@@ -9,6 +9,9 @@ This project is free of any licence and obligations, however i or any other cont
 This code is to be considered unsafe for use in any security application, and is therefore used at your own risk.
 
 - [X] Blake2B
+- average seconds: 0.013567558454566793, std seconds: 0.003345939873982601, samlpe size: 2436
+    - a little slow in my oppinion but meh.
+
 - [ ] MD5
 - [ ] SHA1
 - [ ] SHA256
