@@ -1,7 +1,8 @@
-FROM ubuntu 
+FROM alpine 
 
 WORKDIR build
-RUN apt update && apt -y install build-essential clang
+RUN apk add g++ gcc clang musl-dev
+
 
 ADD . .
 
