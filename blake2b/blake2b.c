@@ -235,7 +235,7 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
     while (bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES)
     {
         Blake2B_Compress(state, false);
-        bytesLeft = messageLength - bytesRead; // change this to 'bytesLeft -= readBytes;'
+        bytesLeft -= readBytes;
         readBytes = bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : bytesLeft;
 
         if (readBytes < BLAKE2B_CONSTANT_BLOCKBYTES)
