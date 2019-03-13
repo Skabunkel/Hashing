@@ -190,17 +190,21 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
     }
 
     // Cant test this yet but i think this would fix it on big endian machines.
-    if(state->isBigEndian)
-    {
-        Flip_Uint64_Bytes((uint64_t*)&hashSt);
-    }
+//    if(state->isBigEndian) //when thinking about it this makes no sence, the buffer is 64 bytes and here i am flipping the first 8.
+//    {
+//        Flip_Uint64_Bytes((uint64_t*)&hashSt);
+//    }
 
     uint8_t *IV0 = (uint8_t*)Blake2BIV;
     uint8_t *result = (uint8_t*)state->stateVector;
+    #pragma GCC push_options
+    #pragma GCC optimize("O0")
     for (int i = 0; i < BLAKE2B_CONSTANT_OUTANDKEYLENGTH; i++)
     {
         result[i] = IV0[i] ^ hashSt[i];
+        hashSt[i] = '\0';
     }
+    #pragma GCC pop_options
 
     state->targetLength = outLength;
     state->keyLength = keyLength;
@@ -231,7 +235,7 @@ void Blake2B_Hash(Blake2BState *state, const uint8_t *message, const uint64_t me
     while (bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES)
     {
         Blake2B_Compress(state, false);
-        bytesLeft = messageLength - bytesRead;
+        bytesLeft = messageLength - bytesRead; // change this to 'bytesLeft -= readBytes;'
         readBytes = bytesLeft > BLAKE2B_CONSTANT_BLOCKBYTES ? BLAKE2B_CONSTANT_BLOCKBYTES : bytesLeft;
 
         if (readBytes < BLAKE2B_CONSTANT_BLOCKBYTES)
@@ -255,6 +259,11 @@ void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t ou
         Blake2B_Compress(state, true);
     }
 
+    #pragma GCC push_options
+    #pragma GCC optimize("O0")
+    memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
+    #pragma GCC pop_options
+    
     if (state->isBigEndian)
     {
         Flip_Uint64_Bytes(&state->stateVector[0]);
