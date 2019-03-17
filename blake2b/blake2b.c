@@ -78,6 +78,17 @@ uint64_t RightShift64(const uint64_t value, int bits)
 {
     return ((value >> bits) | (value << (64 - bits)));
 }
+void SecureZero(const uint8_t *buffer, const uint64_t length)
+{
+    volatile uint8_t *vBuffer = (volatile uint8_t*)buffer;
+    uint64_t ofset = 0;
+
+    while(ofset < length)
+    {
+        vBuffer[ofset] = 0;
+        ofset++;
+    }
+}
 
 void Mix(uint64_t *va, uint64_t *vb, uint64_t *vc, uint64_t *vd, const uint64_t x, const uint64_t y)
 {
@@ -189,23 +200,14 @@ bool Blake2B_Init(Blake2BState *state, const uint8_t outLength, const uint8_t *k
         memcpy(hashSt + 48, personalization, personalizationLength);
     }
 
-    // Cant test this yet but i think this would fix it on big endian machines.
-//    if(state->isBigEndian) //when thinking about it this makes no sence, the buffer is 64 bytes and here i am flipping the first 8.
-//    {
-//        Flip_Uint64_Bytes((uint64_t*)&hashSt);
-//    }
-
     uint8_t *IV0 = (uint8_t*)Blake2BIV;
     uint8_t *result = (uint8_t*)state->stateVector;
-    #pragma GCC push_options
-    #pragma GCC optimize("O0")
     for (int i = 0; i < BLAKE2B_CONSTANT_OUTANDKEYLENGTH; i++)
     {
         result[i] = IV0[i] ^ hashSt[i];
-        hashSt[i] = '\0';
     }
-    #pragma GCC pop_options
 
+    SecureZero(hashSt, BLAKE2B_CONSTANT_OUTANDKEYLENGTH);
     state->targetLength = outLength;
     state->keyLength = keyLength;
 
@@ -259,11 +261,7 @@ void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t ou
         Blake2B_Compress(state, true);
     }
 
-    #pragma GCC push_options
-    #pragma GCC optimize("O0")
-    memset(state->blocks, 0, BLAKE2B_CONSTANT_BLOCKBYTES);
-    #pragma GCC pop_options
-    
+    SecureZero(state->blocks, BLAKE2B_CONSTANT_BLOCKBYTES);
     if (state->isBigEndian)
     {
         Flip_Uint64_Bytes(&state->stateVector[0]);
@@ -277,7 +275,6 @@ void Blake2B_Finalize(Blake2BState *state, uint8_t *outBuffer, const uint64_t ou
     }
 
     uint8_t *reader = (uint8_t*)&state->stateVector;
-
     memcpy(outBuffer, reader, outLength);
 }
 

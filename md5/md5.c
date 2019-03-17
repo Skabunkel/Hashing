@@ -39,6 +39,18 @@ uint32_t LeftShift32(const uint32_t value, int bits)
     return ((value << bits) | (value >> (32 - bits)));
 }
 
+void SecureZero(const uint8_t *buffer, const uint64_t length)
+{
+    volatile uint8_t *vBuffer = (volatile uint8_t*)buffer;
+    uint64_t ofset = 0;
+
+    while(ofset < length)
+    {
+        vBuffer[ofset] = 0;
+        ofset++;
+    }
+}
+
 const static uint8_t shiftVector[64] = 
 {
     7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,

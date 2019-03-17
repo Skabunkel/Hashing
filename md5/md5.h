@@ -21,6 +21,12 @@ typedef enum { false, true } bool;
 #include <stdint.h>
 #include <stdlib.h>
 
+#if !defined(SECURE_ZERO)
+#define SECURE_ZERO
+// Based on some code in libsodium, their version is way more rigurus. So use libsodium of secure code.
+void SecureZero(const uint8_t *buffer, const uint64_t length);
+#endif  
+
 #define MD5_HASH_DIGEST_SIZE 16
 
 //I use a provided buffer here to make it thread safe, lets hope i dont destroy that somewhere else.

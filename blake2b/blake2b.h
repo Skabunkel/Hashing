@@ -33,6 +33,11 @@ typedef enum { false, true } bool;
 #include <stdint.h>
 #include <stdlib.h>
 
+#if !defined(SECURE_ZERO)
+#define SECURE_ZERO
+// Based on some code in libsodium, their version is way more rigurus.
+void SecureZero(const uint8_t *buffer, const uint64_t length);
+#endif    
 
 // message the bytes to hash.
 // messageLength the number of bytes to hash.
@@ -51,6 +56,5 @@ bool Blake2B(const uint8_t *message, const uint64_t messageLength,
              const uint32_t saltLength, const uint8_t *personalization,
              const uint32_t personalizationLength, uint8_t *outbuffer,
              const uint32_t outLength);
-// const char *HexStr(uint8_t *byteBuffer, const uint32_t length);
-bool Is_Big_Endian();
+
 #endif // _BLAKE2B_H
