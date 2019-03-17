@@ -52,9 +52,9 @@ void SecureZero(const uint8_t *buffer, const uint64_t length);
 
 // This implementation can only encode 18446744073709551616 bytes or 16EiB.
 bool Blake2B(const uint8_t *message, const uint64_t messageLength,
-             const uint8_t *key, const uint32_t keyLength, const uint8_t *salt,
-             const uint32_t saltLength, const uint8_t *personalization,
-             const uint32_t personalizationLength, uint8_t *outbuffer,
-             const uint32_t outLength);
+             const uint8_t *key, const uint32_t keyLength, 
+             const uint8_t *salt, const uint32_t saltLength,
+             const uint8_t *personalization, const uint32_t personalizationLength, 
+             uint8_t *outbuffer, const uint32_t outLength);
 
 #endif // _BLAKE2B_H
