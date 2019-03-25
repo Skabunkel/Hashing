@@ -30,6 +30,7 @@ void SecureZero(const uint8_t *buffer, const uint64_t length);
 #define MD5_HASH_DIGEST_SIZE 16
 
 //I use a provided buffer here to make it thread safe, lets hope i dont destroy that somewhere else.
-bool MD5(const uint8_t *message, const uint64_t length, uint8_t *outputBuffer, const uint32_t outputLenght);
+bool MD5(const uint8_t *message, const uint64_t length, 
+         uint8_t *outputBuffer, const uint32_t outputLenght);
 
 #endif

@@ -70,14 +70,17 @@ const static uint32_t Kvalues[K_VALUE_COUNT] =
     0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
     0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
     0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+
     0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
     0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
     0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
     0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+
     0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
     0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
     0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
     0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+
     0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
     0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
     0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
@@ -94,103 +97,128 @@ void MD5_Init(MD5State *state)
 {
     state->is_big_endian = Is_Big_Endian();
     memset(state->chunk, 0, HASH_CHUNK_SIZE);
-    for(int i = 0; i < HASH_VECTOR_SIZE; i++)
-    {
-        state->hashVector[i] = InitVector[i];
-    }
+
+    state->hashVector[0] = InitVector[0];
+    state->hashVector[1] = InitVector[1];
+    state->hashVector[2] = InitVector[2];
+    state->hashVector[3] = InitVector[3];
 }
 
 void MD5_Hash(MD5State *state, const uint8_t *message, const uint64_t length)
 {
     uint64_t byteOfset = 0;
     int readBytes = HASH_CHUNK_SIZE > length ? length : HASH_CHUNK_SIZE;
-    
-    uint32_t *chunkReader = (uint32_t*)state->chunk;
-    uint64_t dataLeft = length - byteOfset;
+    memcpy(state->chunk, message+byteOfset, readBytes);
+    uint64_t dataLeft = length;
 
-    uint32_t F = 0,g = 0;
-
-    uint32_t workingSet[4];
-
-    printf("%i", readBytes);
+    printf("%i\n", readBytes);
 
     // TODO: move this to a sepret function.
     // TODO: make this a while instead since i need to append 0x80 and pad unstill i have 8 bytes left then append the leanth.
-    do{
-        workingSet[0] = state->hashVector[0];
-        workingSet[1] = state->hashVector[1];
-        workingSet[2] = state->hashVector[2];
-        workingSet[3] = state->hashVector[3];
-        
+    while(dataLeft > HASH_CHUNK_SIZE)
+    {
         memcpy(state->chunk, message+byteOfset, readBytes);
-
-        if(state->is_big_endian)
-        {
-            Flip_Uint32_Bytes(&chunkReader[0]);
-            Flip_Uint32_Bytes(&chunkReader[1]);
-            Flip_Uint32_Bytes(&chunkReader[2]);
-            Flip_Uint32_Bytes(&chunkReader[3]);
-            Flip_Uint32_Bytes(&chunkReader[4]);
-            Flip_Uint32_Bytes(&chunkReader[5]);
-            Flip_Uint32_Bytes(&chunkReader[6]);
-            Flip_Uint32_Bytes(&chunkReader[7]);
-            Flip_Uint32_Bytes(&chunkReader[8]);
-            Flip_Uint32_Bytes(&chunkReader[9]);
-            Flip_Uint32_Bytes(&chunkReader[10]);
-            Flip_Uint32_Bytes(&chunkReader[11]);
-            Flip_Uint32_Bytes(&chunkReader[12]);
-            Flip_Uint32_Bytes(&chunkReader[13]);
-            Flip_Uint32_Bytes(&chunkReader[14]);
-            Flip_Uint32_Bytes(&chunkReader[15]);
-        }
-
-        for(int i = 0; i < HASH_CHUNK_SIZE; i++)
-        {
-            if(0 <= i && i <= 15 )
-            {
-              F = (workingSet[3] ^ (workingSet[1] & (workingSet[2] ^ workingSet[3])));
-              g = i;
-            }
-            else if(16 <= i && i <= 31 )
-            {
-              F = (workingSet[2] ^ (workingSet[3] & (workingSet[1] ^ workingSet[2])));
-              g = ((5*i) + 1)%16;
-            }
-            else if(32 <= i && i <= 47 )
-            {
-              F = (workingSet[1] ^ workingSet[2] ^ workingSet[3]);   
-              g = ((3*i) + 5)%16;
-            }
-            else if(48 <= i && i <= 63)
-            {
-              F = (workingSet[2] ^ (workingSet[1] | (!workingSet[3])));   
-              g = (7*i)%16;
-            }
-
-            F += workingSet[0] + Kvalues[i] + chunkReader[g];
-            workingSet[0] = workingSet[3];
-            workingSet[3] = workingSet[2];
-            workingSet[2] = workingSet[1];
-            workingSet[1] += LeftShift32(F, shiftVector[i]);
-        }
-
-        state->hashVector[0] += workingSet[0];
-        state->hashVector[1] += workingSet[1];
-        state->hashVector[2] += workingSet[2];
-        state->hashVector[3] += workingSet[3];
-
+        
+        MD5_Compress(state);
+    
         byteOfset += readBytes;
-        dataLeft = length-byteOfset;
+        dataLeft -= readBytes;
         readBytes = dataLeft > HASH_CHUNK_SIZE  ? HASH_CHUNK_SIZE : dataLeft;
+
         if(readBytes < HASH_CHUNK_SIZE)
             memset(state->chunk, 0, HASH_CHUNK_SIZE);
     }
-    while(byteOfset < length);
+    int padd = length % 64;
+    int padding = padd > 56 ? padd - 56 : 56 - padd;
+    printf("%i\n", readBytes);
+    if(readBytes == 64)
+    {
+        uint64_t bitCount = (length)*8;
+        MD5_Compress(state);
+        memset(state->chunk, 0, HASH_CHUNK_SIZE);
+        state->chunk[0] = 0x80;
+        memcpy(state->chunk+55, (uint8_t*)&bitCount, 8);
+    }
+    
+
+}
+
+void MD5_Compress(MD5State *state)
+{
+    uint32_t *chunkReader = (uint32_t*)state->chunk;
+    uint32_t workingSet[4];
+    uint32_t F = 0,g = 0, tmp = 0;
+    
+    workingSet[0] = state->hashVector[0];
+    workingSet[1] = state->hashVector[1];
+    workingSet[2] = state->hashVector[2];
+    workingSet[3] = state->hashVector[3];
+    
+    if(state->is_big_endian)
+    {
+        Flip_Uint32_Bytes(&chunkReader[0]);
+        Flip_Uint32_Bytes(&chunkReader[1]);
+        Flip_Uint32_Bytes(&chunkReader[2]);
+        Flip_Uint32_Bytes(&chunkReader[3]);
+        Flip_Uint32_Bytes(&chunkReader[4]);
+        Flip_Uint32_Bytes(&chunkReader[5]);
+        Flip_Uint32_Bytes(&chunkReader[6]);
+        Flip_Uint32_Bytes(&chunkReader[7]);
+        Flip_Uint32_Bytes(&chunkReader[8]);
+        Flip_Uint32_Bytes(&chunkReader[9]);
+        Flip_Uint32_Bytes(&chunkReader[10]);
+        Flip_Uint32_Bytes(&chunkReader[11]);
+        Flip_Uint32_Bytes(&chunkReader[12]);
+        Flip_Uint32_Bytes(&chunkReader[13]);
+        Flip_Uint32_Bytes(&chunkReader[14]);
+        Flip_Uint32_Bytes(&chunkReader[15]);
+    }
+
+    for(int i = 0; i < HASH_CHUNK_SIZE; i++)
+    {
+        if(i < 16)
+        {
+            F = ((workingSet[1] & workingSet[2]) | ((~workingSet[1]) & workingSet[3]));
+            g = i;
+        }
+        else if(i < 32)
+        {
+            F = ((workingSet[3] & workingSet[1]) | ((~workingSet[3]) & workingSet[2]));
+            g = (5 * i + 1)%16;
+        }
+        else if(i < 48)
+        {
+            F = (workingSet[1] ^ workingSet[2] ^ workingSet[3]);
+            g = (3 * i + 5)%16;
+        }
+        else
+        {
+            F = (workingSet[2] ^ (workingSet[1] | (~workingSet[3])));
+            g = (7 * i)%16;
+        }
+        uint32_t tmps = (workingSet[0] + F + Kvalues[i] + chunkReader[g]);
+        tmp = workingSet[3];
+        workingSet[3] = workingSet[2];
+        workingSet[2] = workingSet[1];
+        workingSet[1] = workingSet[1] + LeftShift32(tmps, shiftVector[i]);
+        workingSet[0] = tmp;
+        printf("%02d %02d 0x%08x 0x%08x 0x%08x 0x%08x\t\t0x%08x 0x%08x\r\n", i, g, workingSet[0], workingSet[1], workingSet[2], workingSet[3], chunkReader[g], tmps);
+    }
+
+    state->hashVector[0] += workingSet[0];
+    state->hashVector[1] += workingSet[1];
+    state->hashVector[2] += workingSet[2];
+    state->hashVector[3] += workingSet[3];
+    printf("\r\n");
+    printf("0x%08x 0x%08x 0x%08x 0x%08x\r\n", state->hashVector[0], state->hashVector[1], state->hashVector[2], state->hashVector[3]);
 }
 
 void MD5_Finalize(MD5State *state, uint8_t *outputBuffer, const uint64_t outputLenght)
 {
-    
+    MD5_Compress(state);
+
+    SecureZero(state->chunk, HASH_CHUNK_SIZE);
+
     if(state->is_big_endian)
     {
        Flip_Uint32_Bytes(&state->hashVector[0]);
@@ -198,8 +226,8 @@ void MD5_Finalize(MD5State *state, uint8_t *outputBuffer, const uint64_t outputL
        Flip_Uint32_Bytes(&state->hashVector[2]);
        Flip_Uint32_Bytes(&state->hashVector[3]);
     }
-    uint8_t *reader = (uint8_t*)state->hashVector;
 
+    uint8_t *reader = (uint8_t*)state->hashVector;
     memcpy(outputBuffer, reader, 16);
 }
 
