@@ -90,6 +90,7 @@ const static uint32_t Kvalues[K_VALUE_COUNT] =
 typedef struct MD5State{
     bool is_big_endian;
     uint8_t chunk[HASH_CHUNK_SIZE];
+    uint32_t chunkOfset;
     uint32_t hashVector[HASH_VECTOR_SIZE];
 } MD5State;
 
@@ -102,6 +103,8 @@ void MD5_Init(MD5State *state)
     state->hashVector[1] = InitVector[1];
     state->hashVector[2] = InitVector[2];
     state->hashVector[3] = InitVector[3];
+
+    state->chunkOfset = 0;
 }
 
 void MD5_Hash(MD5State *state, const uint8_t *message, const uint64_t length)
@@ -109,6 +112,7 @@ void MD5_Hash(MD5State *state, const uint8_t *message, const uint64_t length)
     uint64_t byteOfset = 0;
     int readBytes = HASH_CHUNK_SIZE > length ? length : HASH_CHUNK_SIZE;
     memcpy(state->chunk, message+byteOfset, readBytes);
+    state->chunkOfset = readBytes;
     uint64_t dataLeft = length;
 
     printf("%i\n", readBytes);
@@ -124,23 +128,43 @@ void MD5_Hash(MD5State *state, const uint8_t *message, const uint64_t length)
         byteOfset += readBytes;
         dataLeft -= readBytes;
         readBytes = dataLeft > HASH_CHUNK_SIZE  ? HASH_CHUNK_SIZE : dataLeft;
+        //state->chunkOfset = readBytes;
 
         if(readBytes < HASH_CHUNK_SIZE)
             memset(state->chunk, 0, HASH_CHUNK_SIZE);
     }
-    int padd = length % 64;
-    int padding = padd > 56 ? padd - 56 : 56 - padd;
-    printf("%i\n", readBytes);
-    if(readBytes == 64)
+    int padd = readBytes % 64;
+    
+    if(padd != 63)
     {
-        uint64_t bitCount = (length)*8;
+        state->chunk[padd] = 0x80;
+        padd++;
+    }
+    else
+    {
         MD5_Compress(state);
         memset(state->chunk, 0, HASH_CHUNK_SIZE);
         state->chunk[0] = 0x80;
-        memcpy(state->chunk+55, (uint8_t*)&bitCount, 8);
+        padd = 0;
     }
-    
 
+    uint32_t left = padd - 64;
+    if(left == 0)
+    {
+        left = 64;
+    }
+
+    uint64_t bits = (length)*8;
+    
+    if(padd > 56)
+    {
+        MD5_Compress(state);
+        memset(state->chunk, 0, HASH_CHUNK_SIZE);
+        state->chunk[0] = 0x80;
+        padd = 0;
+    }
+
+    memcpy(state->chunk+56, &bits, 8);
 }
 
 void MD5_Compress(MD5State *state)
