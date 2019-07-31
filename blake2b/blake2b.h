@@ -47,7 +47,7 @@ void SecureZero(const uint8_t *buffer, const uint64_t length);
 // saltLength the length of the salt field max value 16.
 // personalization the hash personalization max 16 bytes.
 // personalizationLength the length of the personalization field max value 16.
-// outbuffer output buffer.
+// outbuffer output buffer. The raw bytes is written to the buffer.
 // outLength the length of the output buffer max value 64.
 
 // This implementation can only encode 18446744073709551616 bytes or 16EiB.
