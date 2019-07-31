@@ -228,8 +228,6 @@ void MD5_Finalize(MD5State *state, uint8_t *outputBuffer, const uint64_t outputL
 
 bool MD5(const uint8_t *message, const uint64_t length, uint8_t *outputBuffer, const uint32_t outputLenght)
 {
-    return false;
-    // This is not done yet.
     if(outputLenght < MD5_HASH_DIGEST_SIZE) return false;
     MD5State state;
 
