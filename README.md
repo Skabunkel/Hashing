@@ -10,7 +10,7 @@ This code is to be considered unsafe for use in any security application, and is
 
 - [X] Blake2B
     - average seconds: 0.013567558454566793, std seconds: 0.003345939873982601, samlpe size: 2436, output length: 1-64, keylength: 0, input length: 0
-        - a little slow in my oppinion at least for hashing a 0 byte message with a 0 byte long key.
+        - a little slow in my opinion at least for hashing a 0 byte message with a 0 byte long key.
 
 
 - [X] MD5
