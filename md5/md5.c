@@ -14,6 +14,8 @@
 #define HASH_CHUNK_SIZE 64
 #define K_VALUE_COUNT 64
 
+#define MD5_HASH_DIGEST_SIZE 16
+
 bool Is_Big_Endian()
 {
     union 
@@ -90,7 +92,6 @@ const static uint32_t Kvalues[K_VALUE_COUNT] =
 typedef struct MD5State{
     bool is_big_endian;
     uint8_t chunk[HASH_CHUNK_SIZE];
-    uint32_t chunkOfset;
     uint32_t hashVector[HASH_VECTOR_SIZE];
 } MD5State;
 
@@ -103,67 +104,39 @@ void MD5_Init(MD5State *state)
     state->hashVector[1] = InitVector[1];
     state->hashVector[2] = InitVector[2];
     state->hashVector[3] = InitVector[3];
-
-    state->chunkOfset = 0;
 }
 
 void MD5_Hash(MD5State *state, const uint8_t *message, const uint64_t length)
 {
     uint64_t byteOfset = 0;
-    int readBytes = HASH_CHUNK_SIZE > length ? length : HASH_CHUNK_SIZE;
-    memcpy(state->chunk, message+byteOfset, readBytes);
-    state->chunkOfset = readBytes;
+    int32_t readBytes = HASH_CHUNK_SIZE > length ? length : HASH_CHUNK_SIZE;
+
+    int32_t padd = readBytes % 64;
     uint64_t dataLeft = length;
 
-    printf("%i\n", readBytes);
-
     // TODO: move this to a sepret function.
-    // TODO: make this a while instead since i need to append 0x80 and pad unstill i have 8 bytes left then append the leanth.
-    while(dataLeft > HASH_CHUNK_SIZE)
+    while(readBytes == HASH_CHUNK_SIZE)
     {
         memcpy(state->chunk, message+byteOfset, readBytes);
-        
         MD5_Compress(state);
     
         byteOfset += readBytes;
         dataLeft -= readBytes;
-        readBytes = dataLeft > HASH_CHUNK_SIZE  ? HASH_CHUNK_SIZE : dataLeft;
-        //state->chunkOfset = readBytes;
-
-        if(readBytes < HASH_CHUNK_SIZE)
-            memset(state->chunk, 0, HASH_CHUNK_SIZE);
+        readBytes = dataLeft > HASH_CHUNK_SIZE ? HASH_CHUNK_SIZE : dataLeft;
     }
-    int padd = readBytes % 64;
     
-    if(padd != 63)
-    {
-        state->chunk[padd] = 0x80;
-        padd++;
-    }
-    else
+    memset(state->chunk, 0, HASH_CHUNK_SIZE);
+    memcpy(state->chunk, message+byteOfset, readBytes);
+
+    state->chunk[readBytes] = 0x80;
+
+    if(readBytes >= 56)
     {
         MD5_Compress(state);
         memset(state->chunk, 0, HASH_CHUNK_SIZE);
-        state->chunk[0] = 0x80;
-        padd = 0;
-    }
-
-    uint32_t left = padd - 64;
-    if(left == 0)
-    {
-        left = 64;
     }
 
     uint64_t bits = (length)*8;
-    
-    if(padd > 56)
-    {
-        MD5_Compress(state);
-        memset(state->chunk, 0, HASH_CHUNK_SIZE);
-        state->chunk[0] = 0x80;
-        padd = 0;
-    }
-
     memcpy(state->chunk+56, &bits, 8);
 }
 
@@ -200,7 +173,7 @@ void MD5_Compress(MD5State *state)
 
     for(int i = 0; i < HASH_CHUNK_SIZE; i++)
     {
-        if(i < 16)
+        if(i < MD5_HASH_DIGEST_SIZE)
         {
             F = ((workingSet[1] & workingSet[2]) | ((~workingSet[1]) & workingSet[3]));
             g = i;
@@ -208,33 +181,31 @@ void MD5_Compress(MD5State *state)
         else if(i < 32)
         {
             F = ((workingSet[3] & workingSet[1]) | ((~workingSet[3]) & workingSet[2]));
-            g = (5 * i + 1)%16;
+            g = (5 * i + 1)%MD5_HASH_DIGEST_SIZE;
         }
         else if(i < 48)
         {
             F = (workingSet[1] ^ workingSet[2] ^ workingSet[3]);
-            g = (3 * i + 5)%16;
+            g = (3 * i + 5)%MD5_HASH_DIGEST_SIZE;
         }
         else
         {
             F = (workingSet[2] ^ (workingSet[1] | (~workingSet[3])));
-            g = (7 * i)%16;
+            g = (7 * i)%MD5_HASH_DIGEST_SIZE;
         }
         uint32_t tmps = (workingSet[0] + F + Kvalues[i] + chunkReader[g]);
         tmp = workingSet[3];
+
         workingSet[3] = workingSet[2];
         workingSet[2] = workingSet[1];
         workingSet[1] = workingSet[1] + LeftShift32(tmps, shiftVector[i]);
         workingSet[0] = tmp;
-        printf("%02d %02d 0x%08x 0x%08x 0x%08x 0x%08x\t\t0x%08x 0x%08x\r\n", i, g, workingSet[0], workingSet[1], workingSet[2], workingSet[3], chunkReader[g], tmps);
     }
 
     state->hashVector[0] += workingSet[0];
     state->hashVector[1] += workingSet[1];
     state->hashVector[2] += workingSet[2];
     state->hashVector[3] += workingSet[3];
-    printf("\r\n");
-    printf("0x%08x 0x%08x 0x%08x 0x%08x\r\n", state->hashVector[0], state->hashVector[1], state->hashVector[2], state->hashVector[3]);
 }
 
 void MD5_Finalize(MD5State *state, uint8_t *outputBuffer, const uint64_t outputLenght)
@@ -252,7 +223,7 @@ void MD5_Finalize(MD5State *state, uint8_t *outputBuffer, const uint64_t outputL
     }
 
     uint8_t *reader = (uint8_t*)state->hashVector;
-    memcpy(outputBuffer, reader, 16);
+    memcpy(outputBuffer, reader, MD5_HASH_DIGEST_SIZE);
 }
 
 bool MD5(const uint8_t *message, const uint64_t length, uint8_t *outputBuffer, const uint32_t outputLenght)
