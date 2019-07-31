@@ -16,7 +16,7 @@ This code is to be considered unsafe for use in any security application, and is
 - [X] MD5
     - average seconds: 0.010582801423774685 std seconds: 0.006495074281656058, samlpe size: 2636, input length: 0
 
-On hold for 3 months, something came up. Something i promised to do, and i suck doing stuff as it is. 
+On hold for 3 months, something came up. Something i promised to do, and i suck at doing stuff as it is. 
 
 -- 2019-07-31 (i'll set an alarm for it)
    
